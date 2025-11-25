@@ -79,6 +79,7 @@ public struct Template: Hashable, Sendable {
         _ context: [String: Value],
         environment: Environment? = nil
     ) throws -> String {
+        throw JinjaError.runtime("This is a test.")
         let env = environment ?? Environment()
 
         // Set context values directly
