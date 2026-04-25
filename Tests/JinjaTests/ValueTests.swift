@@ -8,6 +8,7 @@ struct ValueTests {
     @Test("Initialization from Any")
     func initFromAny() throws {
         #expect(try Value(any: nil) == Value.null)
+        #expect(try Value(any: NSNull()) == Value.null)
         #expect(try Value(any: "hello") == Value.string("hello"))
         #expect(try Value(any: 42) == Value.int(42))
         #expect(try Value(any: 3.14) == Value.double(3.14))
@@ -44,6 +45,52 @@ struct ValueTests {
         } else {
             Issue.record("Expected object value")
         }
+    }
+
+    @Test("Initialization unwraps erased optionals")
+    func initFromAnyUnwrapsErasedOptionals() throws {
+        let optionalString: Any = Optional("hello") as Any
+        #expect(try Value(any: optionalString) == Value.string("hello"))
+
+        let optionalAnyString: Any = Optional<Any>.some("hello") as Any
+        #expect(try Value(any: optionalAnyString) == Value.string("hello"))
+
+        let nilOptionalString: Any = Optional<String>.none as Any
+        #expect(try Value(any: nilOptionalString) == Value.null)
+
+        let nilOptionalAny: Any = Optional<Any>.none as Any
+        #expect(try Value(any: nilOptionalAny) == Value.null)
+    }
+
+    @Test("Initialization from Foundation JSON nulls")
+    func initFromAnyFoundationJSONNulls() throws {
+        let data = """
+            {
+              "enum": ["this", "future", null],
+              "schema": {
+                "type": ["string", "null"]
+              }
+            }
+            """.data(using: .utf8)!
+        let source = try JSONSerialization.jsonObject(with: data)
+        let value = try Value(any: source)
+
+        guard case let .object(dict) = value else {
+            Issue.record("Expected object value")
+            return
+        }
+
+        guard case let .array(enumValues) = dict["enum"] else {
+            Issue.record("Expected enum array")
+            return
+        }
+        #expect(enumValues == [Value.string("this"), Value.string("future"), Value.null])
+
+        guard case let .object(schema) = dict["schema"] else {
+            Issue.record("Expected schema object")
+            return
+        }
+        #expect(schema["type"] == Value.array([Value.string("string"), Value.string("null")]))
     }
 
     @Test("Literal conformances")

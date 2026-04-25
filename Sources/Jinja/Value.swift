@@ -35,10 +35,27 @@ public enum Value: Sendable {
     /// - Parameter value: The Swift value to convert
     /// - Throws: `JinjaError.runtime` if the value type cannot be converted
     public init(any value: Any?) throws {
+        // An absent top-level optional is Jinja null.
+        guard let value else {
+            self = .null
+            return
+        }
+        // Values passed as `Any` can hide another optional layer, e.g.
+        // `Optional<Any>.some("text") as Any`. Unwrap that before type matching.
+        let mirror = Mirror(reflecting: value)
+        if mirror.displayStyle == .optional {
+            guard let child = mirror.children.first else {
+                self = .null
+                return
+            }
+            self = try Value(any: child.value)
+            return
+        }
         switch value {
         case let value as Value:
             self = value
-        case nil:
+        // Foundation JSON APIs represent null inside arrays/dictionaries as NSNull.
+        case is NSNull:
             self = .null
         case let str as String:
             self = .string(str)
