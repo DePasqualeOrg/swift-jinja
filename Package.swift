@@ -4,7 +4,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "Jinja",
+    name: "swift-jinja",
     platforms: [
         .macOS(.v13),
         .iOS(.v16),

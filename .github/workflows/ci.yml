@@ -1,39 +1,49 @@
 name: CI
 
 on:
-  push:
-    branches: ["main"]
   pull_request:
-    branches: ["main"]
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
-  build:
-    name: Swift ${{ matrix.swift }} on Xcode ${{ matrix.xcode }}
-    runs-on: ${{ matrix.runs-on }}
-    env:
-      DEVELOPER_DIR: "/Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer"
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - swift: "6.0"
-            xcode: "16.0"
-            runs-on: macos-15
-          - swift: "6.1"
-            xcode: "16.3"
-            runs-on: macos-15
-          - swift: "6.2"
-            xcode: "26.0"
-            runs-on: macos-26
-
+  test-macos:
+    name: Test (macOS)
+    runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Lint
-        run: swift format lint --recursive . --strict
-
-      - name: Build
-        run: swift build -v
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Run tests
         run: swift test -v
+
+  test-linux:
+    name: Test (Linux)
+    runs-on: ubuntu-latest
+    container: swift:6.2.3
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Run tests
+        run: swift test -v
+
+  lint:
+    name: Lint
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - run: swift format lint --strict --recursive .
+
+      - name: Suggest fixes (if check fails)
+        if: failure()
+        run: |
+          echo "### Here's how to fix the formatting locally:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "# Format all Swift files" >> $GITHUB_STEP_SUMMARY
+          echo 'swift format -i --recursive .' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
