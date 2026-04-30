@@ -1,11 +1,5 @@
 import Foundation
 
-/// An exception that can be raised in Jinja templates with `raise_exception`.
-public struct TemplateException: Error {
-    /// The message of the exception, if any.
-    var message: String?
-}
-
 // MARK: - Globals
 
 /// Built-in global functions available in the Jinja environment.
@@ -29,7 +23,8 @@ public enum Globals: Sendable {
     ///   - args: Function arguments. First argument should be the error message (optional).
     ///   - kwargs: Keyword arguments (unused).
     ///   - env: The current environment.
-    /// - Throws: JinjaError.runtime with the provided message or a default message.
+    /// - Throws: `JinjaError.exception` with the provided message, or a default
+    ///   message if none was given.
     /// - Returns: Never returns a value as it always throws.
     @discardableResult
     public static func raiseException(
@@ -45,9 +40,9 @@ public enum Globals: Sendable {
         )
 
         if case let .string(message)? = arguments["message"] {
-            throw TemplateException(message: message)
+            throw JinjaError.exception(message)
         } else {
-            throw TemplateException()
+            throw JinjaError.exception("Template raised an exception")
         }
     }
 

@@ -10,6 +10,10 @@ public enum JinjaError: LocalizedError {
     case runtime(String)
     /// Error due to invalid template syntax.
     case syntax(String)
+    /// Error explicitly raised from a template via `raise_exception`. The message
+    /// is template-author content (e.g. input validation), so `errorDescription`
+    /// returns it verbatim without an implementation-detail prefix.
+    case exception(String)
 
     public var errorDescription: String? {
         switch self {
@@ -17,6 +21,7 @@ public enum JinjaError: LocalizedError {
         case .parser(let message): return "Parser error: \(message)"
         case .runtime(let message): return "Runtime error: \(message)"
         case .syntax(let message): return "Syntax error: \(message)"
+        case .exception(let message): return message
         }
     }
 }
