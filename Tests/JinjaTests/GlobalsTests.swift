@@ -9,8 +9,13 @@ struct GlobalsTests {
 
     @Test("raise_exception without arguments")
     func raiseException() throws {
-        #expect(throws: TemplateException.self) {
+        do {
             try Globals.raiseException([], [:], env)
+            Issue.record("Expected JinjaError.exception to be thrown")
+        } catch JinjaError.exception(let message) {
+            #expect(message == "Template raised an exception")
+        } catch {
+            Issue.record("Expected JinjaError.exception, got \(error)")
         }
     }
 
@@ -18,8 +23,11 @@ struct GlobalsTests {
     func raiseExceptionWithMessage() throws {
         do {
             try Globals.raiseException(["Template error: invalid input"], [:], env)
-        } catch let error as TemplateException {
-            #expect(error.message == "Template error: invalid input")
+            Issue.record("Expected JinjaError.exception to be thrown")
+        } catch JinjaError.exception(let message) {
+            #expect(message == "Template error: invalid input")
+        } catch {
+            Issue.record("Expected JinjaError.exception, got \(error)")
         }
     }
 

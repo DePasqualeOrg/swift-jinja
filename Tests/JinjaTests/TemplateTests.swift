@@ -2189,7 +2189,7 @@ struct TemplateTests {
         let string = "{{ raise_exception() }}"
         let context: Context = [:]
 
-        #expect(throws: TemplateException.self) {
+        #expect(throws: JinjaError.self) {
             try Template(string).render(context)
         }
     }
@@ -2202,8 +2202,8 @@ struct TemplateTests {
         do {
             _ = try Template(string).render(context)
             Issue.record("Expected exception to be thrown")
-        } catch let error as TemplateException {
-            #expect(error.message == "Template error: invalid input")
+        } catch JinjaError.exception(let message) {
+            #expect(message == "Template error: invalid input")
         }
     }
 
